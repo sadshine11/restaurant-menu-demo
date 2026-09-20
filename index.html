@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Демонстрация веб-приложения меню ресторана: категории, корзина, оформление заказа, личный кабинет и админ-панель.">
+<style>
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>Меню ресторана Шафран</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --ink: #1d1a1c;
+    --ink-2: #57504f;
+    --ink-3: #8b8280;
+    --bg: #f7f4ef;
+    --surface: #ffffff;
+    --surface-2: #f0ebe3;
+    --line: #e2dbd1;
+    --wine: #7c2b3d;
+    --wine-soft: #f3e3e6;
+    --brass: #b6832f;
+    --green: #2e6b4a;
+    --shadow: 0 10px 30px rgba(40, 26, 20, .10);
+    --radius: 14px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #f3ece4;
+      --ink-2: #c3b8ae;
+      --ink-3: #8d8279;
+      --bg: #171414;
+      --surface: #201c1d;
+      --surface-2: #2a2426;
+      --line: #392f31;
+      --wine: #d8788c;
+      --wine-soft: #3a222a;
+      --brass: #d9a84f;
+      --green: #6cc191;
+      --shadow: 0 12px 34px rgba(0, 0, 0, .45);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #f3ece4;
+    --ink-2: #c3b8ae;
+    --ink-3: #8d8279;
+    --bg: #171414;
+    --surface: #201c1d;
+    --surface-2: #2a2426;
+    --line: #392f31;
+    --wine: #d8788c;
+    --wine-soft: #3a222a;
+    --brass: #d9a84f;
+    --green: #6cc191;
+    --shadow: 0 12px 34px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: 'Prata', 'Times New Roman', serif; font-weight: 400; text-wrap: balance; margin: 0; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-inline: 16px; }
+
+  /* header */
+  .top {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-in { display: flex; align-items: center; gap: 14px; padding-block: 12px; }
+  .brand { display: flex; align-items: baseline; gap: 9px; margin-right: auto; }
+  .brand b { font-family: 'Prata', serif; font-weight: 400; font-size: 21px; letter-spacing: .3px; }
+  .brand i { font-style: normal; font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--ink-3); }
+  .btn {
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 10px; padding: 9px 14px; font-size: 14px; font-weight: 600;
+    transition: border-color .15s, background .15s, transform .12s;
+  }
+  .btn:hover { border-color: var(--wine); }
+  .btn:active { transform: translateY(1px); }
+  .btn-main { background: var(--wine); border-color: var(--wine); color: #fff; }
+  .btn-main:hover { filter: brightness(1.08); }
+  .btn-ghost { background: transparent; }
+  .btn-sm { padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+  .cart-btn { display: flex; align-items: center; gap: 9px; }
+  .cart-btn .cnt {
+    min-width: 21px; height: 21px; padding: 0 6px; border-radius: 11px;
+    background: var(--wine); color: #fff; font-size: 12px; font-weight: 700;
+    display: grid; place-items: center;
+  }
+  .cart-btn .sum { font-variant-numeric: tabular-nums; }
+  .who { font-size: 13px; color: var(--ink-3); display: none; }
+
+  /* demo strip */
+  .demo-strip {
+    background: var(--wine-soft); border-bottom: 1px solid var(--line);
+    font-size: 13px; color: var(--ink-2);
+  }
+  .demo-strip .wrap { padding-block: 9px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+  .demo-strip b { color: var(--wine); font-weight: 700; }
+
+  /* hero */
+  .hero { padding-block: 34px 22px; display: grid; gap: 10px; }
+  .hero h1 { font-size: clamp(30px, 6vw, 46px); line-height: 1.08; }
+  .hero p { margin: 0; max-width: 60ch; color: var(--ink-2); }
+  .hero .meta { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+
+  /* tabs */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; padding-block: 6px 18px; border-bottom: 1px solid var(--line); }
+  .tab {
+    border: 1px solid var(--line); background: transparent; border-radius: 999px;
+    padding: 8px 16px; font-size: 14px; font-weight: 600; color: var(--ink-2);
+  }
+  .tab[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+  /* grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 16px; padding-block: 20px 34px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .thumb { aspect-ratio: 4 / 3; max-width: 100%; display: grid; place-items: center; font-size: 46px; }
+  .card-body { padding: 13px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card h3 { font-size: 17px; line-height: 1.25; }
+  .card .desc { font-size: 13px; color: var(--ink-2); margin: 0; flex: 1; }
+  .card .gram { font-size: 12px; color: var(--ink-3); letter-spacing: .3px; }
+  .card .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; }
+  .price { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .skeleton { border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface-2); height: 268px; animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: .5; } 50% { opacity: .85; } }
+  @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+  /* sections */
+  section.block { padding-block: 34px; border-top: 1px solid var(--line); }
+  section.block h2 { font-size: 26px; margin-bottom: 6px; }
+  section.block > .wrap > p.lead { color: var(--ink-2); max-width: 65ch; margin-top: 0; }
+
+  /* db schema */
+  .tables { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 18px; }
+  .tbl { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .tbl h3 { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: .4px; color: var(--wine); }
+  .tbl ul { margin: 8px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--ink-2); display: grid; gap: 3px; }
+  .tbl li span { color: var(--ink-3); }
+  .tbl .fk { color: var(--brass); }
+
+  /* drawer */
+  .overlay { position: fixed; inset: 0; background: rgba(15, 10, 12, .5); z-index: 50; }
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(410px, 100%); z-index: 60;
+    background: var(--surface); border-left: 1px solid var(--line);
+    display: flex; flex-direction: column; box-shadow: var(--shadow);
+  }
+  .drawer header, .modal header { padding: 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
+  .drawer header h2, .modal header h2 { font-size: 20px; margin-right: auto; }
+  .drawer .body { padding: 16px; overflow-y: auto; flex: 1; display: grid; gap: 12px; align-content: start; }
+  .drawer footer { padding: 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+  .line { display: flex; align-items: center; gap: 12px; }
+  .line .em { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; font-size: 22px; flex: none; }
+  .line .nm { flex: 1; min-width: 0; }
+  .line .nm b { display: block; font-size: 14px; font-weight: 600; }
+  .line .nm span { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .qty { display: flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 9px; }
+  .qty button { border: 0; background: transparent; width: 28px; height: 28px; font-size: 16px; line-height: 1; border-radius: 8px; }
+  .qty button:hover { background: var(--surface-2); }
+  .qty b { min-width: 22px; text-align: center; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; }
+  .total b { font-size: 22px; font-family: 'Prata', serif; font-weight: 400; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--ink-3); font-size: 14px; text-align: center; padding: 30px 10px; }
+
+  /* modal */
+  .modal {
+    position: fixed; z-index: 60; inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(560px, calc(100% - 32px)); max-height: min(86vh, 720px); overflow: hidden;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    display: flex; flex-direction: column; box-shadow: var(--shadow);
+  }
+  .modal .body { padding: 16px; overflow-y: auto; display: grid; gap: 14px; align-content: start; }
+  label.f { display: grid; gap: 5px; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+  input, select, textarea {
+    font: inherit; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; width: 100%;
+  }
+  textarea { resize: vertical; min-height: 68px; }
+  input:focus, select:focus, textarea:focus, button:focus-visible, .tab:focus-visible {
+    outline: 2px solid var(--wine); outline-offset: 2px;
+  }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 460px) { .two { grid-template-columns: 1fr; } }
+
+  /* admin + orders */
+  .rows { display: grid; gap: 8px; }
+  .rowitem {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+  }
+  .rowitem .nm { flex: 1; min-width: 0; }
+  .rowitem .nm b { font-size: 14px; }
+  .rowitem .nm span { display: block; font-size: 12px; color: var(--ink-3); }
+  .chip {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2);
+  }
+  .chip.done { background: color-mix(in srgb, var(--green) 18%, transparent); color: var(--green); }
+  .order-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; display: grid; gap: 7px; }
+  .order-card .head { display: flex; align-items: center; gap: 10px; }
+  .order-card .head b { font-size: 14px; margin-right: auto; }
+  .order-card ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+  .order-card .sum { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* toast */
+  .toast {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 999px;
+    font-size: 14px; font-weight: 600; z-index: 80; box-shadow: var(--shadow);
+  }
+
+  footer.site { border-top: 1px solid var(--line); padding-block: 22px 34px; color: var(--ink-3); font-size: 13px; }
+  footer.site .wrap { display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+
+<div class="demo-strip">
+  <div class="wrap">
+    <b>Демо-версия интерфейса.</b>
+    <span>Можно добавлять блюда в корзину, оформлять заказ, входить как клиент и как администратор. В рабочей версии данные хранятся в MySQL, корзина — в сессии PHP.</span>
+  </div>
+</div>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand"><b>Шафран</b><i>ресторан</i></div>
+    <span class="who" id="who"></span>
+    <button class="btn btn-ghost" id="accountBtn">Кабинет</button>
+    <button class="btn btn-main cart-btn" id="cartBtn">
+      Корзина <span class="cnt" id="cartCount">0</span> <span class="sum" id="cartSum">0 ₽</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>Меню ресторана</h1>
+    <p>Кухня русская и средиземноморская. Заказ можно собрать на сайте и оформить самовывоз или доставку по городу.</p>
+    <div class="meta">
+      <span>Ежедневно 11:00 — 23:00</span>
+      <span>Доставка от 1500 ₽</span>
+      <span>Самовывоз за 25 минут</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <section class="block" id="adminSection" hidden>
+    <div class="wrap">
+      <h2>Панель администратора</h2>
+      <p class="lead">Раздел доступен только пользователю с ролью «администратор». Добавление, редактирование и удаление блюд — изменения сразу видны в меню.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn btn-main" id="addDishBtn">Добавить блюдо</button>
+      </div>
+      <div class="rows" id="adminRows"></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2>Структура базы данных</h2>
+      <p class="lead">Пять связанных таблиц по вашему техническому заданию. Цена в order_items фиксируется на момент заказа, поэтому история заказов не меняется при изменении цен в меню.</p>
+      <div class="tables">
+        <div class="tbl">
+          <h3>users</h3>
+          <ul>
+            <li>id <span>PK</span></li><li>name</li><li>email <span>unique</span></li>
+            <li>password_hash</li><li>role <span>client / admin</span></li><li>created_at</li>
+          </ul>
+        </div>
+        <div class="tbl">
+          <h3>categories</h3>
+          <ul>
+            <li>id <span>PK</span></li><li>title</li><li>slug <span>unique</span></li><li>sort_order</li>
+          </ul>
+        </div>
+        <div class="tbl">
+          <h3>dishes</h3>
+          <ul>
+            <li>id <span>PK</span></li><li class="fk">category_id → categories.id</li>
+            <li>title</li><li>description</li><li>price</li><li>image</li><li>is_active</li>
+          </ul>
+        </div>
+        <div class="tbl">
+          <h3>orders</h3>
+          <ul>
+            <li>id <span>PK</span></li><li class="fk">user_id → users.id</li>
+            <li>total</li><li>status</li><li>phone</li><li>address</li><li>created_at</li>
+          </ul>
+        </div>
+        <div class="tbl">
+          <h3>order_items</h3>
+          <ul>
+            <li>id <span>PK</span></li><li class="fk">order_id → orders.id</li>
+            <li class="fk">dish_id → dishes.id</li><li>qty</li><li>price <span>на момент заказа</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Демонстрационный проект. Все блюда и цены приведены для примера.</span>
+    <span>PHP · MySQL · AJAX · сессии</span>
+  </div>
+</footer>
+
+<script>
+  var TINTS = ['#f0e0d6', '#e4ead9', '#f2e3ea', '#e6e3f0', '#f0eada', '#dfe9ec'];
+  var TINTS_DARK = ['#3a2c26', '#2c3729', '#3a2a32', '#2e2b3c', '#383222', '#26343a'];
+
+  var CATS = [
+    { slug: 'salads', title: 'Салаты' },
+    { slug: 'hot', title: 'Горячее' },
+    { slug: 'desserts', title: 'Десерты' },
+    { slug: 'drinks', title: 'Напитки' }
+  ];
+
+  var SEED = [
+    { id: 1, cat: 'salads', title: 'Салат с ростбифом и рукколой', desc: 'Говяжий ростбиф слабой прожарки, руккола, вяленые томаты, пармезан', price: 680, gram: '220 г', img: '🥗' },
+    { id: 2, cat: 'salads', title: 'Оливье с копчёным угрём', desc: 'Классическая основа, копчёный угорь, перепелиное яйцо', price: 590, gram: '210 г', img: '🥙' },
+    { id: 3, cat: 'salads', title: 'Греческий с фетой', desc: 'Овощи, маслины каламата, фета, оливковое масло', price: 520, gram: '240 г', img: '🫒' },
+    { id: 4, cat: 'salads', title: 'Тёплый салат с осьминогом', desc: 'Осьминог на гриле, молодой картофель, каперсы', price: 920, gram: '230 г', img: '🐙' },
+    { id: 5, cat: 'hot', title: 'Стейк рибай', desc: 'Мраморная говядина, соус деми-глас, розмарин', price: 2400, gram: '320 г', img: '🥩' },
+    { id: 6, cat: 'hot', title: 'Котлета по-киевски', desc: 'Куриное филе, зелёное масло, картофельное пюре', price: 890, gram: '300 г', img: '🍗' },
+    { id: 7, cat: 'hot', title: 'Пельмени с телятиной', desc: 'Ручная лепка, бульон, сметана, свежий укроп', price: 640, gram: '250 г', img: '🥟' },
+    { id: 8, cat: 'hot', title: 'Дорадо на гриле', desc: 'Целая рыба, лимон, тимьян, овощи гриль', price: 1350, gram: '350 г', img: '🐟' },
+    { id: 9, cat: 'desserts', title: 'Медовик', desc: 'Восемь коржей, сметанный крем, грецкий орех', price: 420, gram: '160 г', img: '🍰' },
+    { id: 10, cat: 'desserts', title: 'Чизкейк Нью-Йорк', desc: 'Сливочный сыр, песочная основа, ягодный соус', price: 460, gram: '150 г', img: '🧀' },
+    { id: 11, cat: 'desserts', title: 'Панна котта с малиной', desc: 'Сливки, ваниль бурбон, малиновое пюре', price: 390, gram: '140 г', img: '🍮' },
+    { id: 12, cat: 'desserts', title: 'Наполеон', desc: 'Слоёное тесто, заварной крем, миндальная крошка', price: 440, gram: '170 г', img: '🥮' },
+    { id: 13, cat: 'drinks', title: 'Морс клюквенный', desc: 'Домашний, без сахара, подаётся охлаждённым', price: 240, gram: '400 мл', img: '🍹' },
+    { id: 14, cat: 'drinks', title: 'Эспрессо', desc: 'Обжарка недели, зерно Бразилия — Эфиопия', price: 180, gram: '40 мл', img: '☕' },
+    { id: 15, cat: 'drinks', title: 'Раф лавандовый', desc: 'Сливки, лавандовый сироп, эспрессо', price: 340, gram: '300 мл', img: '🥤' },
+    { id: 16, cat: 'drinks', title: 'Лимонад тархун', desc: 'Свежая мята, лайм, газированная вода', price: 290, gram: '400 мл', img: '🥒' }
+  ];
+
+  var store = {
+    read: function (key, fallback) {
+      try {
+        var raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) { return fallback; }
+    },
+    write: function (key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* демо работает и без хранилища */ }
+    }
+  };
+
+  var dishes = store.read('sh_dishes', null) || SEED.slice();
+  var cart = store.read('sh_cart', {}) || {};
+  var orders = store.read('sh_orders', []) || [];
+  var user = store.read('sh_user', null);
+  var activeCat = 'salads';
+  var editingId = null;
+
+  function save() {
+    store.write('sh_dishes', dishes);
+    store.write('sh_cart', cart);
+    store.write('sh_orders', orders);
+    store.write('sh_user', user);
+  }
+
+  function isDark() {
+    var attr = document.documentElement.getAttribute('data-theme');
+    if (attr === 'dark') return true;
+    if (attr === 'light') return false;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function tint(id) {
+    var set = isDark() ? TINTS_DARK : TINTS;
+    return set[id % set.length];
+  }
+  function money(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+  function byId(id) { return dishes.filter(function (d) { return d.id === id; })[0]; }
+
+  /* ---------- меню и табы ---------- */
+  var tabsEl = document.getElementById('tabs');
+  var gridEl = document.getElementById('grid');
+
+  CATS.forEach(function (c) {
+    var b = document.createElement('button');
+    b.className = 'tab';
+    b.id = 'tab-' + c.slug;
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', c.slug === activeCat ? 'true' : 'false');
+    b.textContent = c.title;
+    b.addEventListener('click', function () { loadCategory(c.slug); });
+    tabsEl.appendChild(b);
+  });
+
+  function loadCategory(slug) {
+    activeCat = slug;
+    Array.prototype.forEach.call(tabsEl.children, function (b) {
+      b.setAttribute('aria-selected', b.id === 'tab-' + slug ? 'true' : 'false');
+    });
+    // имитация AJAX-запроса: в рабочей версии здесь fetch к menu.php?category=slug
+    gridEl.innerHTML = '';
+    for (var i = 0; i < 4; i++) {
+      var sk = document.createElement('div');
+      sk.className = 'skeleton';
+      gridEl.appendChild(sk);
+    }
+    setTimeout(renderMenu, 280);
+  }
+
+  function renderMenu() {
+    var list = dishes.filter(function (d) { return d.cat === activeCat; });
+    gridEl.innerHTML = '';
+    if (!list.length) {
+      var e = document.createElement('p');
+      e.className = 'empty';
+      e.textContent = 'В этой категории пока нет блюд.';
+      gridEl.appendChild(e);
+      return;
+    }
+    list.forEach(function (d) {
+      var card = document.createElement('article');
+      card.className = 'card';
+      var thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      thumb.style.background = tint(d.id);
+      thumb.textContent = d.img;
+      var body = document.createElement('div');
+      body.className = 'card-body';
+      var h = document.createElement('h3');
+      h.textContent = d.title;
+      var gram = document.createElement('div');
+      gram.className = 'gram';
+      gram.textContent = d.gram || '';
+      var p = document.createElement('p');
+      p.className = 'desc';
+      p.textContent = d.desc;
+      var row = document.createElement('div');
+      row.className = 'row';
+      var price = document.createElement('span');
+      price.className = 'price';
+      price.textContent = money(d.price);
+      var add = document.createElement('button');
+      add.className = 'btn btn-main btn-sm';
+      add.type = 'button';
+      add.textContent = 'В корзину';
+      add.addEventListener('click', function () { addToCart(d.id); });
+      row.appendChild(price); row.appendChild(add);
+      body.appendChild(h); body.appendChild(gram); body.appendChild(p); body.appendChild(row);
+      card.appendChild(thumb); card.appendChild(body);
+      gridEl.appendChild(card);
+    });
+  }
+
+  /* ---------- корзина ---------- */
+  function cartEntries() {
+    return Object.keys(cart).map(function (k) {
+      var d = byId(parseInt(k, 10));
+      return d ? { dish: d, qty: cart[k] } : null;
+    }).filter(Boolean);
+  }
+  function cartCount() { return cartEntries().reduce(function (s, e) { return s + e.qty; }, 0); }
+  function cartTotal() { return cartEntries().reduce(function (s, e) { return s + e.qty * e.dish.price; }, 0); }
+
+  function updateHeader() {
+    document.getElementById('cartCount').textContent = cartCount();
+    document.getElementById('cartSum').textContent = money(cartTotal());
+    var who = document.getElementById('who');
+    if (user) {
+      who.style.display = 'inline';
+      who.textContent = user.name + (user.role === 'admin' ? ' · администратор' : ' · клиент');
+    } else {
+      who.style.display = 'none';
+    }
+    document.getElementById('adminSection').hidden = !(user && user.role === 'admin');
+    if (user && user.role === 'admin') renderAdmin();
+  }
+
+  function addToCart(id) {
+    cart[id] = (cart[id] || 0) + 1;
+    save(); updateHeader(); renderDrawer();
+    toast(byId(id).title + ' — добавлено');
+  }
+  function setQty(id, delta) {
+    cart[id] = (cart[id] || 0) + delta;
+    if (cart[id] <= 0) delete cart[id];
+    save(); updateHeader(); renderDrawer();
+  }
+
+  /* ---------- слои ---------- */
+  var layer = null;
+  function closeLayer() {
+    if (layer) { layer.forEach(function (n) { n.remove(); }); layer = null; }
+  }
+  function openLayer(node) {
+    closeLayer();
+    var ov = document.createElement('div');
+    ov.className = 'overlay';
+    ov.addEventListener('click', closeLayer);
+    document.body.appendChild(ov);
+    document.body.appendChild(node);
+    layer = [ov, node];
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLayer(); });
+
+  function headerBar(title) {
+    var h = document.createElement('header');
+    var t = document.createElement('h2');
+    t.textContent = title;
+    var x = document.createElement('button');
+    x.className = 'btn btn-sm btn-ghost';
+    x.type = 'button';
+    x.textContent = 'Закрыть';
+    x.addEventListener('click', closeLayer);
+    h.appendChild(t); h.appendChild(x);
+    return h;
+  }
+
+  /* ---------- drawer корзины ---------- */
+  function renderDrawer() {
+    var open = document.querySelector('.drawer');
+    if (!open) return;
+    var body = open.querySelector('.body');
+    var foot = open.querySelector('footer');
+    body.innerHTML = '';
+    var items = cartEntries();
+    if (!items.length) {
+      var e = document.createElement('p');
+      e.className = 'empty';
+      e.textContent = 'Корзина пуста. Выберите блюда из меню.';
+      body.appendChild(e);
+    }
+    items.forEach(function (it) {
+      var line = document.createElement('div');
+      line.className = 'line';
+      var em = document.createElement('div');
+      em.className = 'em';
+      em.style.background = tint(it.dish.id);
+      em.textContent = it.dish.img;
+      var nm = document.createElement('div');
+      nm.className = 'nm';
+      var b = document.createElement('b'); b.textContent = it.dish.title;
+      var s = document.createElement('span'); s.textContent = money(it.dish.price) + ' × ' + it.qty + ' = ' + money(it.dish.price * it.qty);
+      nm.appendChild(b); nm.appendChild(s);
+      var q = document.createElement('div');
+      q.className = 'qty';
+      var minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '−';
+      minus.setAttribute('aria-label', 'Убрать одну порцию');
+      minus.addEventListener('click', function () { setQty(it.dish.id, -1); });
+      var cnt = document.createElement('b'); cnt.textContent = it.qty;
+      var plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+';
+      plus.setAttribute('aria-label', 'Добавить порцию');
+      plus.addEventListener('click', function () { setQty(it.dish.id, 1); });
+      q.appendChild(minus); q.appendChild(cnt); q.appendChild(plus);
+      line.appendChild(em); line.appendChild(nm); line.appendChild(q);
+      body.appendChild(line);
+    });
+    foot.innerHTML = '';
+    var total = document.createElement('div');
+    total.className = 'total';
+    var lbl = document.createElement('span'); lbl.textContent = 'Итого';
+    var val = document.createElement('b'); val.textContent = money(cartTotal());
+    total.appendChild(lbl); total.appendChild(val);
+    var go = document.createElement('button');
+    go.className = 'btn btn-main';
+    go.type = 'button';
+    go.textContent = 'Оформить заказ';
+    go.disabled = !items.length;
+    go.style.opacity = items.length ? '1' : '.5';
+    go.addEventListener('click', openCheckout);
+    foot.appendChild(total); foot.appendChild(go);
+  }
+
+  function openCart() {
+    var d = document.createElement('aside');
+    d.className = 'drawer';
+    d.appendChild(headerBar('Корзина'));
+    var body = document.createElement('div'); body.className = 'body';
+    var foot = document.createElement('footer');
+    d.appendChild(body); d.appendChild(foot);
+    openLayer(d);
+    renderDrawer();
+  }
+  document.getElementById('cartBtn').addEventListener('click', openCart);
+
+  /* ---------- оформление заказа ---------- */
+  function openCheckout() {
+    var m = document.createElement('div');
+    m.className = 'modal';
+    m.appendChild(headerBar('Оформление заказа'));
+    var body = document.createElement('div'); body.className = 'body';
+    var form = document.createElement('form');
+    form.style.display = 'grid'; form.style.gap = '14px';
+    form.innerHTML =
+      '<div class="two">' +
+      '<label class="f">Имя<input id="coName" required value="' + (user ? user.name : '') + '"></label>' +
+      '<label class="f">Телефон<input id="coPhone" required placeholder="+7 900 000-00-00"></label>' +
+      '</div>' +
+      '<label class="f">Адрес доставки<input id="coAddr" placeholder="Улица, дом, квартира — или оставьте пустым для самовывоза"></label>' +
+      '<label class="f">Комментарий к заказу<textarea id="coNote" placeholder="Например: позвонить за 15 минут"></textarea></label>';
+    var total = document.createElement('div');
+    total.className = 'total';
+    total.innerHTML = '<span>К оплате</span><b>' + money(cartTotal()) + '</b>';
+    var submit = document.createElement('button');
+    submit.className = 'btn btn-main';
+    submit.type = 'submit';
+    submit.textContent = 'Подтвердить заказ';
+    form.appendChild(total); form.appendChild(submit);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var items = cartEntries().map(function (it) {
+        return { title: it.dish.title, qty: it.qty, price: it.dish.price };
+      });
+      orders.unshift({
+        id: 1000 + orders.length + 1,
+        date: new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        items: items,
+        total: cartTotal(),
+        status: 'Принят',
+        name: document.getElementById('coName').value,
+        phone: document.getElementById('coPhone').value,
+        address: document.getElementById('coAddr').value || 'Самовывоз'
+      });
+      cart = {};
+      save(); updateHeader(); closeLayer();
+      toast('Заказ оформлен, он сохранён в кабинете');
+    });
+    body.appendChild(form);
+    m.appendChild(body);
+    openLayer(m);
+  }
+
+  /* ---------- кабинет и вход ---------- */
+  document.getElementById('accountBtn').addEventListener('click', function () {
+    if (user) openAccount(); else openLogin();
+  });
+
+  function openLogin() {
+    var m = document.createElement('div');
+    m.className = 'modal';
+    m.appendChild(headerBar('Вход'));
+    var body = document.createElement('div'); body.className = 'body';
+    var form = document.createElement('form');
+    form.style.display = 'grid'; form.style.gap = '14px';
+    form.innerHTML =
+      '<label class="f">Электронная почта<input id="lgMail" type="email" value="client@shafran.ru" required></label>' +
+      '<label class="f">Пароль<input id="lgPass" type="password" value="demo1234" required></label>' +
+      '<p style="margin:0;font-size:13px;color:var(--ink-3)">В демо пароль не проверяется. Выберите роль, чтобы увидеть разные права доступа: у администратора появляется раздел управления блюдами.</p>';
+    var two = document.createElement('div');
+    two.className = 'two';
+    var asClient = document.createElement('button');
+    asClient.className = 'btn'; asClient.type = 'button'; asClient.textContent = 'Войти как клиент';
+    asClient.addEventListener('click', function () { login('Анна', 'client'); });
+    var asAdmin = document.createElement('button');
+    asAdmin.className = 'btn btn-main'; asAdmin.type = 'button'; asAdmin.textContent = 'Войти как администратор';
+    asAdmin.addEventListener('click', function () { login('Администратор', 'admin'); });
+    two.appendChild(asClient); two.appendChild(asAdmin);
+    form.appendChild(two);
+    form.addEventListener('submit', function (e) { e.preventDefault(); login('Анна', 'client'); });
+    body.appendChild(form);
+    m.appendChild(body);
+    openLayer(m);
+  }
+
+  function login(name, role) {
+    user = { name: name, role: role };
+    save(); updateHeader(); closeLayer();
+    toast(role === 'admin' ? 'Вы вошли как администратор' : 'Вы вошли как клиент');
+    if (role === 'admin') document.getElementById('adminSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function openAccount() {
+    var m = document.createElement('div');
+    m.className = 'modal';
+    m.appendChild(headerBar('Личный кабинет'));
+    var body = document.createElement('div'); body.className = 'body';
+    var info = document.createElement('div');
+    info.className = 'rowitem';
+    info.innerHTML = '<div class="nm"><b>' + user.name + '</b><span>' +
+      (user.role === 'admin' ? 'администратор' : 'клиент') + ' · заказов: ' + orders.length + '</span></div>';
+    var out = document.createElement('button');
+    out.className = 'btn btn-sm'; out.type = 'button'; out.textContent = 'Выйти';
+    out.addEventListener('click', function () { user = null; save(); updateHeader(); closeLayer(); toast('Вы вышли из аккаунта'); });
+    info.appendChild(out);
+    body.appendChild(info);
+    var h = document.createElement('h3');
+    h.style.fontFamily = 'Manrope, sans-serif'; h.style.fontSize = '15px'; h.style.fontWeight = '700';
+    h.textContent = 'История заказов';
+    body.appendChild(h);
+    if (!orders.length) {
+      var e = document.createElement('p');
+      e.className = 'empty';
+      e.textContent = 'Заказов пока нет.';
+      body.appendChild(e);
+    }
+    orders.forEach(function (o) {
+      var c = document.createElement('div');
+      c.className = 'order-card';
+      var head = document.createElement('div');
+      head.className = 'head';
+      head.innerHTML = '<b>Заказ № ' + o.id + '</b><span class="chip done">' + o.status + '</span>';
+      var date = document.createElement('div');
+      date.style.fontSize = '12.5px'; date.style.color = 'var(--ink-3)';
+      date.textContent = o.date + ' · ' + o.address;
+      var ul = document.createElement('ul');
+      o.items.forEach(function (it) {
+        var li = document.createElement('li');
+        li.textContent = it.title + ' × ' + it.qty + ' — ' + money(it.price * it.qty);
+        ul.appendChild(li);
+      });
+      var sum = document.createElement('div');
+      sum.className = 'sum';
+      sum.textContent = 'Итого: ' + money(o.total);
+      c.appendChild(head); c.appendChild(date); c.appendChild(ul); c.appendChild(sum);
+      body.appendChild(c);
+    });
+    m.appendChild(body);
+    openLayer(m);
+  }
+
+  /* ---------- админ-панель ---------- */
+  function renderAdmin() {
+    var box = document.getElementById('adminRows');
+    box.innerHTML = '';
+    dishes.forEach(function (d) {
+      var row = document.createElement('div');
+      row.className = 'rowitem';
+      var em = document.createElement('div');
+      em.className = 'em';
+      em.style.cssText = 'width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-size:19px;flex:none;background:' + tint(d.id);
+      em.textContent = d.img;
+      var nm = document.createElement('div');
+      nm.className = 'nm';
+      var catTitle = CATS.filter(function (c) { return c.slug === d.cat; })[0];
+      nm.innerHTML = '<b>' + d.title + '</b><span>' + (catTitle ? catTitle.title : d.cat) + ' · ' + money(d.price) + '</span>';
+      var edit = document.createElement('button');
+      edit.className = 'btn btn-sm'; edit.type = 'button'; edit.textContent = 'Изменить';
+      edit.addEventListener('click', function () { openDishForm(d.id); });
+      var del = document.createElement('button');
+      del.className = 'btn btn-sm'; del.type = 'button'; del.textContent = 'Удалить';
+      del.addEventListener('click', function () {
+        dishes = dishes.filter(function (x) { return x.id !== d.id; });
+        delete cart[d.id];
+        save(); renderAdmin(); renderMenu(); updateHeader();
+        toast('Блюдо удалено');
+      });
+      row.appendChild(em); row.appendChild(nm); row.appendChild(edit); row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+
+  document.getElementById('addDishBtn').addEventListener('click', function () { openDishForm(null); });
+
+  function openDishForm(id) {
+    editingId = id;
+    var d = id ? byId(id) : { title: '', desc: '', price: '', cat: 'salads', img: '🍽', gram: '' };
+    var m = document.createElement('div');
+    m.className = 'modal';
+    m.appendChild(headerBar(id ? 'Редактирование блюда' : 'Новое блюдо'));
+    var body = document.createElement('div'); body.className = 'body';
+    var form = document.createElement('form');
+    form.style.display = 'grid'; form.style.gap = '14px';
+    var opts = CATS.map(function (c) {
+      return '<option value="' + c.slug + '"' + (c.slug === d.cat ? ' selected' : '') + '>' + c.title + '</option>';
+    }).join('');
+    form.innerHTML =
+      '<label class="f">Название<input id="dfTitle" required value="' + d.title.replace(/"/g, '&quot;') + '"></label>' +
+      '<label class="f">Описание<textarea id="dfDesc">' + d.desc + '</textarea></label>' +
+      '<div class="two">' +
+      '<label class="f">Цена, ₽<input id="dfPrice" type="number" min="0" required value="' + d.price + '"></label>' +
+      '<label class="f">Категория<select id="dfCat">' + opts + '</select></label>' +
+      '</div>' +
+      '<div class="two">' +
+      '<label class="f">Вес или объём<input id="dfGram" value="' + (d.gram || '') + '" placeholder="220 г"></label>' +
+      '<label class="f">Изображение<input id="dfImg" value="' + d.img + '" placeholder="🍽"></label>' +
+      '</div>' +
+      '<p style="margin:0;font-size:13px;color:var(--ink-3)">В рабочей версии здесь загрузка файла с проверкой формата и веса, автоматическим уменьшением до нужного размера. В демо вместо фотографии используется символ.</p>';
+    var submit = document.createElement('button');
+    submit.className = 'btn btn-main'; submit.type = 'submit';
+    submit.textContent = id ? 'Сохранить' : 'Добавить блюдо';
+    form.appendChild(submit);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var payload = {
+        title: document.getElementById('dfTitle').value,
+        desc: document.getElementById('dfDesc').value,
+        price: parseInt(document.getElementById('dfPrice').value, 10) || 0,
+        cat: document.getElementById('dfCat').value,
+        gram: document.getElementById('dfGram').value,
+        img: document.getElementById('dfImg').value || '🍽'
+      };
+      if (editingId) {
+        var target = byId(editingId);
+        Object.keys(payload).forEach(function (k) { target[k] = payload[k]; });
+        toast('Изменения сохранены');
+      } else {
+        var maxId = dishes.reduce(function (m2, x) { return Math.max(m2, x.id); }, 0);
+        payload.id = maxId + 1;
+        dishes.push(payload);
+        toast('Блюдо добавлено в меню');
+      }
+      save(); closeLayer(); renderAdmin();
+      if (payload.cat === activeCat) renderMenu();
+    });
+    body.appendChild(form);
+    m.appendChild(body);
+    openLayer(m);
+  }
+
+  /* ---------- прочее ---------- */
+  var toastTimer = null;
+  function toast(text) {
+    var old = document.querySelector('.toast');
+    if (old) old.remove();
+    var t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = text;
+    document.body.appendChild(t);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.remove(); }, 2200);
+  }
+
+  updateHeader();
+  loadCategory('salads');
+</script>
+
+</body>
+</html>
