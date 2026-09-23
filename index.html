@@ -106,6 +106,24 @@
   }
   .cart-btn .sum { font-variant-numeric: tabular-nums; }
   .who { font-size: 13px; color: var(--ink-3); display: none; }
+  .top .btn { white-space: nowrap; flex: none; }
+
+  /* На узком экране шапка не вмещает всё — прячем второстепенное, чтобы корзина не уходила за край.
+     .who скрипт показывает инлайн-стилем, поэтому здесь !important */
+  @media (max-width: 720px) { .who { display: none !important; } }
+  @media (max-width: 560px) {
+    .top-in { gap: 8px; }
+    .top .btn { padding-inline: 12px; }
+    .brand i, .cart-btn .sum { display: none; }
+  }
+  @media (max-width: 359px) {
+    .cart-btn::before {
+      content: ''; width: 18px; height: 18px; background: currentColor;
+      -webkit-mask: var(--bag) center / contain no-repeat; mask: var(--bag) center / contain no-repeat;
+    }
+    .cart-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+  .cart-btn { --bag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M16 10a4 4 0 0 1-8 0'/%3E%3C/svg%3E"); }
 
   /* demo strip */
   .demo-strip {
@@ -250,7 +268,7 @@
     <span class="who" id="who"></span>
     <button class="btn btn-ghost" id="accountBtn">Кабинет</button>
     <button class="btn btn-main cart-btn" id="cartBtn">
-      Корзина <span class="cnt" id="cartCount">0</span> <span class="sum" id="cartSum">0 ₽</span>
+      <span class="cart-label">Корзина</span> <span class="cnt" id="cartCount">0</span> <span class="sum" id="cartSum">0 ₽</span>
     </button>
   </div>
 </header>
